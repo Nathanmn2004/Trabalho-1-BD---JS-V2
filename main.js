@@ -94,6 +94,11 @@ class GerenciadorDistribuidora {
         return new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari);
     }
 
+    async exibirComprasporCliente(clienteId) {
+        const res = await pool.query('SELECT * FROM venda WHERE cliente_id = $1', [clienteId]);
+        return res.rows.map(v => new Venda(v.id, v.cliente_id, v.vendedor_id, v.data_venda, v.desconto_percent, v.total_bruto, v.total_liquido, v.status));
+    }
+
     async listarProdutos() {
         const res = await pool.query('SELECT * FROM produto ORDER BY id ASC');
         return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
@@ -123,6 +128,21 @@ class GerenciadorDistribuidora {
     async listarVendedores() {
         const res = await pool.query('SELECT * FROM vendedor WHERE ativo = true ORDER BY nome ASC');
         return res.rows.map(v => new Vendedor(v.id, v.nome, v.matricula, v.ativo));
+    }
+
+    async procuraClienteporNome(nome) {
+        const res = await pool.query('SELECT * FROM cliente WHERE nome = $1', [nome]);
+        return res.rows.map(c => new Cliente(c.id, c.nome, c.cpf, c.telefone, c.cidade, c.torce_flamengo, c.assiste_one_piece, c.criado_em));
+    }
+
+    async procuraVendedorporNome(nome) {
+        const res = await pool.query('SELECT * FROM vendedor WHERE nome = $1', [nome]);
+        return res.rows.map(v => new Vendedor(v.id, v.nome, v.matricula, v.ativo));
+    }
+
+    async procuraProdutoporNome(nome) {
+        const res = await pool.query('SELECT * FROM produto WHERE nome = $1', [nome]);
+        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
     }
 
     // --- VENDA (TRANSACIONAL) ---
@@ -231,7 +251,7 @@ async function main() {
         try {
             switch (opt) {
                 case '1': // Produtos
-                    console.log("\n[ESTOQUE] 1.Listar 2.Inserir");
+                    console.log("\n[ESTOQUE] 1.Listar 2.Inserir 3.Procurar por nome");
                     const subP = await rl.question("Opção: ");
                     if (subP === '1') console.table(await g.listarProdutos());
                     if (subP === '2') {
@@ -244,9 +264,14 @@ async function main() {
                         const res = await g.inserirProduto(n, m, c, p, q, mari);
                         console.log("✅ Produto Inserido com ID Automático:", res.id);
                     }
+                    if (subP === '3') {
+                        const n = await rl.question("Nome: ");
+                        const res = await g.procuraProdutoporNome(n);
+                        console.table(res);
+                    }
                     break;
                 case '2': // Clientes
-                    console.log("\n[CLIENTES] 1.Listar 2.Inserir");
+                    console.log("\n[CLIENTES] 1.Listar 2.Inserir 3.Procurar por nome 4.Exibir compras por cliente");
                     const subC = await rl.question("Opção: ");
                     if (subC === '1') console.table(await g.listarClientes());
                     if (subC === '2') {
@@ -259,9 +284,19 @@ async function main() {
                         const res = await g.inserirCliente(n, cp, t, cid, f, o);
                         console.log("✅ Cliente Inserido com ID Automático:", res.id);
                     }
+                    if (subC === '3') {
+                        const n = await rl.question("Nome: ");
+                        const res = await g.procuraClienteporNome(n);
+                        console.table(res);
+                    }
+                    if (subC === '4') {
+                        const id = await rl.question("ID do Cliente: ");
+                        const res = await g.exibirComprasporCliente(id);
+                        console.table(res);
+                    }
                     break;
                 case '3': // Vendedores
-                    console.log("\n[VENDEDORES] 1.Listar 2.Inserir");
+                    console.log("\n[VENDEDORES] 1.Listar 2.Inserir 3.Procurar por nome");
                     const subV = await rl.question("Opção: ");
                     if (subV === '1') console.table(await g.listarVendedores());
                     if (subV === '2') {
@@ -269,6 +304,11 @@ async function main() {
                         const ma = await rl.question("Matrícula: ");
                         const res = await g.inserirVendedor(n, ma, true);
                         console.log("✅ Vendedor Inserido com ID Automático:", res.id);
+                    }
+                    if (subV === '3') {
+                        const n = await rl.question("Nome: ");
+                        const res = await g.procuraVendedorporNome(n);
+                        console.table(res);
                     }
                     break;
                 case '4': // PDV

@@ -1,231 +1,6 @@
-require('dotenv').config();
-const { Pool } = require('pg');
 const readline = require('readline/promises');
-
-// Configuração do Pool de Conexão
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
-    options: `-c search_path=${process.env.DB_SCHEMA}`
-});
-
-// ====== CLASSES DE MODELAGEM (Mapeamento de Tabelas) ======
-
-class Cliente {
-    constructor(id, nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece, criado_em) {
-        this.id = id;
-        this.nome = nome;
-        this.cpf = cpf;
-        this.telefone = telefone;
-        this.cidade = cidade;
-        this.torce_flamengo = torce_flamengo;
-        this.assiste_one_piece = assiste_one_piece;
-        this.criado_em = criado_em;
-    }
-}
-
-class Vendedor {
-    constructor(id, nome, matricula, ativo) {
-        this.id = id;
-        this.nome = nome;
-        this.matricula = matricula;
-        this.ativo = ativo;
-    }
-}
-
-class Produto {
-    constructor(id, nome, marca, categoria, preco, quantidade, fabricado_em_mari) {
-        this.id = id;
-        this.nome = nome;
-        this.marca = marca;
-        this.categoria = categoria;
-        this.preco = parseFloat(preco);
-        this.quantidade = parseInt(quantidade);
-        this.fabricado_em_mari = fabricado_em_mari;
-    }
-}
-
-class Venda {
-    constructor(id, cliente_id, vendedor_id, data_venda, desconto_percent, total_bruto, total_liquido, status) {
-        this.id = id;
-        this.cliente_id = cliente_id;
-        this.vendedor_id = vendedor_id;
-        this.data_venda = data_venda;
-        this.desconto_percent = parseFloat(desconto_percent);
-        this.total_bruto = parseFloat(total_bruto);
-        this.total_liquido = parseFloat(total_liquido);
-        this.status = status;
-    }
-}
-
-class ItemVenda {
-    constructor(id, venda_id, produto_id, quantidade, preco_unitario) {
-        this.id = id;
-        this.venda_id = venda_id;
-        this.produto_id = produto_id;
-        this.quantidade = parseInt(quantidade);
-        this.preco_unitario = parseFloat(preco_unitario);
-    }
-}
-
-class Pagamento {
-    constructor(id, venda_id, tipo, status_confirmacao, codigo_transacao, criado_em) {
-        this.id = id;
-        this.venda_id = venda_id;
-        this.tipo = tipo;
-        this.status_confirmacao = status_confirmacao;
-        this.codigo_transacao = codigo_transacao;
-        this.criado_em = criado_em;
-    }
-}
-
-// ====== CLASSE DE GERENCIAMENTO ======
-
-class GerenciadorDistribuidora {
-
-    // --- PRODUTOS ---
-    async inserirProduto(nome, marca, categoria, preco, quantidade, fabricado_em_mari) {
-        const query = 'INSERT INTO produto (nome, marca, categoria, preco, quantidade, fabricado_em_mari) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
-        const res = await pool.query(query, [nome, marca, categoria, preco, quantidade, fabricado_em_mari]);
-        const p = res.rows[0];
-        return new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari);
-    }
-
-    async exibirComprasporCliente(clienteId) {
-        const res = await pool.query('SELECT * FROM venda WHERE cliente_id = $1', [clienteId]);
-        return res.rows.map(v => new Venda(v.id, v.cliente_id, v.vendedor_id, v.data_venda, v.desconto_percent, v.total_bruto, v.total_liquido, v.status));
-    }
-
-    async listarProdutos() {
-        const res = await pool.query('SELECT * FROM produto ORDER BY id ASC');
-        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
-    }
-
-    // --- CLIENTES ---
-    async inserirCliente(nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece) {
-        const query = 'INSERT INTO cliente (nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
-        const res = await pool.query(query, [nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece]);
-        const c = res.rows[0];
-        return new Cliente(c.id, c.nome, c.cpf, c.telefone, c.cidade, c.torce_flamengo, c.assiste_one_piece, c.criado_em);
-    }
-
-    async listarClientes() {
-        const res = await pool.query('SELECT * FROM cliente ORDER BY nome ASC');
-        return res.rows.map(c => new Cliente(c.id, c.nome, c.cpf, c.telefone, c.cidade, c.torce_flamengo, c.assiste_one_piece, c.criado_em));
-    }
-
-    // --- VENDEDORES ---
-    async inserirVendedor(nome, matricula, ativo) {
-        const query = 'INSERT INTO vendedor (nome, matricula, ativo) VALUES ($1, $2, $3) RETURNING *';
-        const res = await pool.query(query, [nome, matricula, ativo]);
-        const v = res.rows[0];
-        return new Vendedor(v.id, v.nome, v.matricula, v.ativo);
-    }
-
-    async listarVendedores() {
-        const res = await pool.query('SELECT * FROM vendedor WHERE ativo = true ORDER BY nome ASC');
-        return res.rows.map(v => new Vendedor(v.id, v.nome, v.matricula, v.ativo));
-    }
-
-    async procuraClienteporNome(nome) {
-        const res = await pool.query('SELECT * FROM cliente WHERE nome = $1', [nome]);
-        return res.rows.map(c => new Cliente(c.id, c.nome, c.cpf, c.telefone, c.cidade, c.torce_flamengo, c.assiste_one_piece, c.criado_em));
-    }
-
-    async procuraVendedorporNome(nome) {
-        const res = await pool.query('SELECT * FROM vendedor WHERE nome = $1', [nome]);
-        return res.rows.map(v => new Vendedor(v.id, v.nome, v.matricula, v.ativo));
-    }
-
-    async procuraProdutoporNome(nome) {
-        const res = await pool.query('SELECT * FROM produto WHERE nome = $1', [nome]);
-        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
-    }
-
-    // --- VENDA (TRANSACIONAL) ---
-    async realizarVenda(clienteId, vendedorId, itens, tipoPagamento) {
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
-            const resCli = await client.query('SELECT torce_flamengo, assiste_one_piece, cidade FROM cliente WHERE id = $1', [clienteId]);
-            if (resCli.rowCount === 0) throw new Error("Cliente não encontrado.");
-            const cli = resCli.rows[0];
-            const desconto = (cli.torce_flamengo || cli.assiste_one_piece || cli.cidade.toLowerCase() === 'sousa') ? 10.0 : 0.0;
-
-            const resVenda = await client.query(
-                'INSERT INTO venda (cliente_id, vendedor_id, desconto_percent, total_bruto, total_liquido, status) VALUES ($1, $2, $3, 0, 0, \'CONCLUIDA\') RETURNING *',
-                [clienteId, vendedorId, desconto]
-            );
-            const vData = resVenda.rows[0];
-            const venda = new Venda(vData.id, vData.cliente_id, vData.vendedor_id, vData.data_venda, vData.desconto_percent, vData.total_bruto, vData.total_liquido, vData.status);
-
-            let totalBruto = 0;
-            const itensCriados = [];
-
-            for (const itemData of itens) {
-                const resProd = await client.query('SELECT preco, quantidade, nome FROM produto WHERE id = $1 FOR UPDATE', [itemData.produtoId]);
-                if (resProd.rowCount === 0) throw new Error(`Produto ${itemData.produtoId} não existe.`);
-                const prod = resProd.rows[0];
-
-                if (prod.quantidade < itemData.qtd) throw new Error(`Estoque insuficiente para ${prod.nome}.`);
-
-                await client.query('UPDATE produto SET quantidade = quantidade - $1 WHERE id = $2', [itemData.qtd, itemData.produtoId]);
-
-                const resItem = await client.query(
-                    'INSERT INTO item_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES ($1, $2, $3, $4) RETURNING *',
-                    [venda.id, itemData.produtoId, itemData.qtd, prod.preco]
-                );
-                const i = resItem.rows[0];
-                itensCriados.push(new ItemVenda(i.id, i.venda_id, i.produto_id, i.quantidade, i.preco_unitario));
-
-                totalBruto += (itemData.qtd * prod.preco);
-            }
-
-            const totalLiquido = totalBruto * (1 - (desconto / 100));
-            await client.query('UPDATE venda SET total_bruto = $1, total_liquido = $2 WHERE id = $3', [totalBruto, totalLiquido, venda.id]);
-
-            // Atualizar objeto local
-            venda.total_bruto = totalBruto;
-            venda.total_liquido = totalLiquido;
-
-            const resPag = await client.query(
-                'INSERT INTO pagamento (venda_id, tipo, status_confirmacao) VALUES ($1, $2, $3) RETURNING *',
-                [venda.id, tipoPagamento, 'PENDENTE']
-            );
-            const p = resPag.rows[0];
-            const pagamento = new Pagamento(p.id, p.venda_id, p.tipo, p.status_confirmacao, p.codigo_transacao, p.criado_em);
-
-            await client.query('COMMIT');
-            return { venda, itens: itensCriados, pagamento };
-        } catch (e) {
-            await client.query('ROLLBACK');
-            throw e;
-        } finally {
-            client.release();
-        }
-    }
-
-    async listarVendas() {
-        const res = await pool.query('SELECT * FROM venda ORDER BY data_venda DESC');
-        return res.rows.map(v => new Venda(v.id, v.cliente_id, v.vendedor_id, v.data_venda, v.desconto_percent, v.total_bruto, v.total_liquido, v.status));
-    }
-
-    async gerarRelatorioGeral() {
-        const stats = await pool.query(`
-            SELECT 
-                (SELECT COUNT(*) FROM produto) as qtd_produtos,
-                (SELECT COUNT(*) FROM cliente) as qtd_clientes,
-                (SELECT COUNT(*) FROM vendedor) as qtd_vendedores,
-                (SELECT COUNT(*) FROM venda WHERE status = 'CONCLUIDA') as qtd_vendas,
-                (SELECT SUM(total_liquido) FROM venda WHERE status = 'CONCLUIDA') as faturamento_total
-        `);
-        return stats.rows[0];
-    }
-}
+const pool = require('./db');
+const GerenciadorDistribuidora = require('./gerenciador');
 
 // ====== CLI INTERFACE ======
 
@@ -251,7 +26,7 @@ async function main() {
         try {
             switch (opt) {
                 case '1': // Produtos
-                    console.log("\n[ESTOQUE] 1.Listar 2.Inserir 3.Procurar por nome");
+                    console.log("\n[ESTOQUE] 1.Listar 2.Inserir 3.Procurar por nome 4.Alterar 5.Remover 6.Exibir um");
                     const subP = await rl.question("Opção: ");
                     if (subP === '1') console.table(await g.listarProdutos());
                     if (subP === '2') {
@@ -269,9 +44,31 @@ async function main() {
                         const res = await g.procuraProdutoporNome(n);
                         console.table(res);
                     }
+                    if (subP === '4') {
+                        const id = await rl.question("ID do Produto para Alterar: ");
+                        const n = await rl.question("Novo Nome: ");
+                        const m = await rl.question("Nova Marca: ");
+                        const c = await rl.question("Nova Categoria: ");
+                        const p = await rl.question("Novo Preço: ");
+                        const q = await rl.question("Nova Qtd: ");
+                        const mari = (await rl.question("Fabricado em Mari? (s/n): ")) === 's';
+                        await g.alterarProduto(id, n, m, c, p, q, mari);
+                        console.log("✅ Produto Alterado com Sucesso!");
+                    }
+                    if (subP === '5') {
+                        const id = await rl.question("ID do Produto para Remover: ");
+                        await g.removerProduto(id);
+                        console.log("✅ Produto Removido com Sucesso!");
+                    }
+                    if (subP === '6') {
+                        const id = await rl.question("ID do Produto: ");
+                        const res = await g.exibirProduto(id);
+                        if (res) console.table([res]);
+                        else console.log("❌ Produto não encontrado.");
+                    }
                     break;
                 case '2': // Clientes
-                    console.log("\n[CLIENTES] 1.Listar 2.Inserir 3.Procurar por nome 4.Exibir compras por cliente");
+                    console.log("\n[CLIENTES] 1.Listar 2.Inserir 3.Procurar por nome 4.Exibir compras 5.Alterar 6.Remover 7.Exibir um");
                     const subC = await rl.question("Opção: ");
                     if (subC === '1') console.table(await g.listarClientes());
                     if (subC === '2') {
@@ -294,9 +91,31 @@ async function main() {
                         const res = await g.exibirComprasporCliente(id);
                         console.table(res);
                     }
+                    if (subC === '5') {
+                        const id = await rl.question("ID do Cliente para Alterar: ");
+                        const n = await rl.question("Novo Nome: ");
+                        const cp = await rl.question("Novo CPF: ");
+                        const t = await rl.question("Novo Tel: ");
+                        const cid = await rl.question("Nova Cidade: ");
+                        const f = (await rl.question("Flamengo? (s/n): ")) === 's';
+                        const o = (await rl.question("One Piece? (s/n): ")) === 's';
+                        await g.alterarCliente(id, n, cp, t, cid, f, o);
+                        console.log("✅ Cliente Alterado com Sucesso!");
+                    }
+                    if (subC === '6') {
+                        const id = await rl.question("ID do Cliente para Remover: ");
+                        await g.removerCliente(id);
+                        console.log("✅ Cliente Removido com Sucesso!");
+                    }
+                    if (subC === '7') {
+                        const id = await rl.question("ID do Cliente: ");
+                        const res = await g.exibirCliente(id);
+                        if (res) console.table([res]);
+                        else console.log("❌ Cliente não encontrado.");
+                    }
                     break;
                 case '3': // Vendedores
-                    console.log("\n[VENDEDORES] 1.Listar 2.Inserir 3.Procurar por nome");
+                    console.log("\n[VENDEDORES] 1.Listar 2.Inserir 3.Procurar por nome 4.Alterar 5.Remover 6.Exibir um");
                     const subV = await rl.question("Opção: ");
                     if (subV === '1') console.table(await g.listarVendedores());
                     if (subV === '2') {
@@ -309,6 +128,25 @@ async function main() {
                         const n = await rl.question("Nome: ");
                         const res = await g.procuraVendedorporNome(n);
                         console.table(res);
+                    }
+                    if (subV === '4') {
+                        const id = await rl.question("ID do Vendedor para Alterar: ");
+                        const n = await rl.question("Novo Nome: ");
+                        const ma = await rl.question("Nova Matrícula: ");
+                        const at = (await rl.question("Ativo? (s/n): ")) === 's';
+                        await g.alterarVendedor(id, n, ma, at);
+                        console.log("✅ Vendedor Alterado com Sucesso!");
+                    }
+                    if (subV === '5') {
+                        const id = await rl.question("ID do Vendedor para Remover: ");
+                        await g.removerVendedor(id);
+                        console.log("✅ Vendedor Removido com Sucesso!");
+                    }
+                    if (subV === '6') {
+                        const id = await rl.question("ID do Vendedor: ");
+                        const res = await g.exibirVendedor(id);
+                        if (res) console.table([res]);
+                        else console.log("❌ Vendedor não encontrado.");
                     }
                     break;
                 case '4': // PDV
@@ -351,7 +189,9 @@ async function main() {
                     console.log(`Faturamento: R$ ${parseFloat(rel.faturamento_total || 0).toFixed(2)}`);
                     console.log("===============================");
                     break;
-                case '0': loop = false; break;
+                case '0':
+                    loop = false;
+                    break;
             }
         } catch (err) { console.error("\n❌ ERRO:", err.message); }
     }

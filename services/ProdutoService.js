@@ -44,6 +44,28 @@ class ProdutoService {
         const res = await pool.query('SELECT * FROM produto WHERE nome = $1', [nome]);
         return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
     }
+
+
+    async procuraFixaPreco(faixaInferior, faixaSuperior){
+        const res = await pool.query('SELECT * FROM produto WHERE preco BETWEEN $1 AND $2', [faixaInferior, faixaSuperior]);
+        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
+    }
+
+
+    async procuraPorCategoria(categoria){
+        const res = await pool.query('SELECT * FROM produto WHERE categoria = $1', [categoria]);
+        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
+    }
+
+    async produtosDeMari(){
+        const res = await pool.query('SELECT * FROM produto WHERE fabricado_em_Mari = TRUE');
+        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
+    }
+
+    async produtosComMenosdeCinco(){
+        const res = await pool.query('SELECT * FROM produto WHERE quantidade < 5');
+        return res.rows.map(p => new Produto(p.id, p.nome, p.marca, p.categoria, p.preco, p.quantidade, p.fabricado_em_mari));
+    }
 }
 
 module.exports = new ProdutoService();

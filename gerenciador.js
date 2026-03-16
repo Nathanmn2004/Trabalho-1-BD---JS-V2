@@ -12,6 +12,10 @@ class GerenciadorDistribuidora {
     async alterarProduto(...args) { return produtoService.alterar(...args); }
     async removerProduto(id) { return produtoService.remover(id); }
     async procuraProdutoporNome(nome) { return produtoService.procurarPorNome(nome); }
+    async procuraFixaPreco(faixaInferior, faixaSuperior) {return produtoService.procuraFixaPreco(faixaInferior,faixaSuperior )}
+    async procuraPorCategoria (categoria) {return produtoService.procuraPorCategoria(categoria)}
+    async produtosDeMari() {return produtoService.produtosDeMari()}
+    async produtosComMenosdeCinco() {return produtoService.produtosComMenosdeCinco()}
 
     // --- CLIENTES ---
     async inserirCliente(...args) { return clienteService.inserir(...args); }

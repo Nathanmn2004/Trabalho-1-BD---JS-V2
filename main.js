@@ -26,7 +26,7 @@ async function main() {
         try {
             switch (opt) {
                 case '1': // Produtos
-                    console.log("\n[ESTOQUE] 1.Listar 2.Inserir 3.Procurar por nome 4.Alterar 5.Remover 6.Exibir um");
+                    console.log("\n[ESTOQUE] 1.Listar \n 2.Inserir \n 3.Procurar por nome \n 4.Alterar \n 5.Remover \n 6.Exibir um \n 7. Busca por faixa de Preco \n 8. Buscar por Categoria \n 9. Produtos Feitos em Mari \n 10. Verificar Produtos com Menos que 5 Unidades" );
                     const subP = await rl.question("Opção: ");
                     if (subP === '1') console.table(await g.listarProdutos());
                     if (subP === '2') {
@@ -66,6 +66,28 @@ async function main() {
                         if (res) console.table([res]);
                         else console.log("❌ Produto não encontrado.");
                     }
+                    if (subP == '7'){
+                        const inf = await rl.question("Faixa de Preço Inferior: ");
+                        const sup = await rl.question("Faixa de Preço Superior: ");
+                        const res = await g.procuraFixaPreco(inf,sup);
+                        console.table(res);
+                    }
+
+                    if (subP == '8'){
+                        const c = await rl.question("Digite a Categoria que você quer procurar: ");
+                        const res = await g.procuraPorCategoria(c);
+                        console.table(res);
+                    }
+
+                    if (subP == '9'){
+                        console.log("Produtos Feitos em Mari:");
+                        console.table(await g.produtosDeMari());
+                    }
+                    if (subP == '10'){
+                        console.log("Produtos Com Menos de 5 Unidades:");
+                        console.table(await g.produtosComMenosdeCinco());
+                    }
+
                     break;
                 case '2': // Clientes
                     console.log("\n[CLIENTES] 1.Listar 2.Inserir 3.Procurar por nome 4.Exibir compras 5.Alterar 6.Remover 7.Exibir um");

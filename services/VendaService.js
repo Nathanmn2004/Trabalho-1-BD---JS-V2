@@ -90,6 +90,27 @@ class VendaService {
         `);
         return stats.rows[0];
     }
+
+    async gerarRelatorioMensalVendedores() {
+        const query = `
+            SELECT 
+                vdr.nome as vendedor,
+                COUNT(v.id) as total_vendas,
+                SUM(v.total_liquido) as valor_total
+            FROM venda v
+            JOIN vendedor vdr ON v.vendedor_id = vdr.id
+            WHERE v.status = 'CONCLUIDA'
+              AND v.data_venda >= date_trunc('month', current_date)
+            GROUP BY vdr.nome
+            ORDER BY valor_total DESC
+        `;
+        const res = await pool.query(query);
+        return res.rows;
+    }
+
+    async cancelarVenda(vendaId) {
+        await pool.query('CALL cancelar_venda($1)', [vendaId]);
+    }
 }
 
 module.exports = new VendaService();

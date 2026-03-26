@@ -14,7 +14,8 @@ async function menu() {
     console.log("3. Gestão de Vendedores");
     console.log("4. REALIZAR VENDA (PDV)");
     console.log("5. Listar Vendas Realizadas");
-    console.log("6. Relatório Geral");
+    console.log("6. Relatórios");
+    console.log("7. Cancelar Venda (Procedimento)");
     console.log("0. Sair");
     return await rl.question("Escolha: ");
 }
@@ -26,7 +27,7 @@ async function main() {
         try {
             switch (opt) {
                 case '1': // Produtos
-                    console.log("\n[ESTOQUE] 1.Listar \n 2.Inserir \n 3.Procurar por nome \n 4.Alterar \n 5.Remover \n 6.Exibir um \n 7. Busca por faixa de Preco \n 8. Buscar por Categoria \n 9. Produtos Feitos em Mari \n 10. Verificar Produtos com Menos que 5 Unidades" );
+                    console.log("\n[ESTOQUE] \n 1.Listar \n 2.Inserir \n 3.Procurar por nome \n 4.Alterar \n 5.Remover \n 6.Exibir um \n 7. Busca por faixa de Preco \n 8. Buscar por Categoria \n 9. Produtos Feitos em Mari \n 10. Verificar Produtos com Menos que 5 Unidades");
                     const subP = await rl.question("Opção: ");
                     if (subP === '1') console.table(await g.listarProdutos());
                     if (subP === '2') {
@@ -66,31 +67,31 @@ async function main() {
                         if (res) console.table([res]);
                         else console.log("❌ Produto não encontrado.");
                     }
-                    if (subP == '7'){
+                    if (subP == '7') {
                         const inf = await rl.question("Faixa de Preço Inferior: ");
                         const sup = await rl.question("Faixa de Preço Superior: ");
-                        const res = await g.procuraFixaPreco(inf,sup);
+                        const res = await g.procuraFixaPreco(inf, sup);
                         console.table(res);
                     }
 
-                    if (subP == '8'){
+                    if (subP == '8') {
                         const c = await rl.question("Digite a Categoria que você quer procurar: ");
                         const res = await g.procuraPorCategoria(c);
                         console.table(res);
                     }
 
-                    if (subP == '9'){
+                    if (subP == '9') {
                         console.log("Produtos Feitos em Mari:");
                         console.table(await g.produtosDeMari());
                     }
-                    if (subP == '10'){
+                    if (subP == '10') {
                         console.log("Produtos Com Menos de 5 Unidades:");
                         console.table(await g.produtosComMenosdeCinco());
                     }
 
                     break;
                 case '2': // Clientes
-                    console.log("\n[CLIENTES] 1.Listar 2.Inserir 3.Procurar por nome 4.Exibir compras 5.Alterar 6.Remover 7.Exibir um");
+                    console.log("\n[CLIENTES] \n 1.Listar \n 2.Inserir \n 3.Procurar por nome \n 4.Exibir compras \n 5.Alterar \n 6.Remover \n 7.Exibir um");
                     const subC = await rl.question("Opção: ");
                     if (subC === '1') console.table(await g.listarClientes());
                     if (subC === '2') {
@@ -137,7 +138,7 @@ async function main() {
                     }
                     break;
                 case '3': // Vendedores
-                    console.log("\n[VENDEDORES] 1.Listar 2.Inserir 3.Procurar por nome 4.Alterar 5.Remover 6.Exibir um");
+                    console.log("\n[VENDEDORES] \n 1.Listar \n 2.Inserir \n 3.Procurar por nome \n 4.Alterar \n 5.Remover \n 6.Exibir um");
                     const subV = await rl.question("Opção: ");
                     if (subV === '1') console.table(await g.listarVendedores());
                     if (subV === '2') {
@@ -203,13 +204,29 @@ async function main() {
                     console.log("\n--- VENDAS REALIZADAS ---");
                     console.table(await g.listarVendas());
                     break;
-                case '6': // Relatório
-                    const rel = await g.gerarRelatorioGeral();
-                    console.log("\n======= RELATÓRIO GERAL =======");
-                    console.log(`Produtos: ${rel.qtd_produtos} | Clientes: ${rel.qtd_clientes}`);
-                    console.log(`Vendedores: ${rel.qtd_vendedores} | Vendas: ${rel.qtd_vendas}`);
-                    console.log(`Faturamento: R$ ${parseFloat(rel.faturamento_total || 0).toFixed(2)}`);
-                    console.log("===============================");
+                case '6': // Relatórios
+                    console.log("\n[RELATÓRIOS] 1. Geral 2. Mensal por Vendedor");
+                    const subR = await rl.question("Opção: ");
+                    if (subR === '1') {
+                        const rel = await g.gerarRelatorioGeral();
+                        console.log("\n======= RELATÓRIO GERAL =======");
+                        console.log(`Produtos: ${rel.qtd_produtos} | Clientes: ${rel.qtd_clientes}`);
+                        console.log(`Vendedores: ${rel.qtd_vendedores} | Vendas: ${rel.qtd_vendas}`);
+                        console.log(`Faturamento: R$ ${parseFloat(rel.faturamento_total || 0).toFixed(2)}`);
+                        console.log("===============================");
+                    }
+                    if (subR === '2') {
+                        const relMensal = await g.gerarRelatorioMensalVendedores();
+                        console.log("\n======= RELATÓRIO MENSAL POR VENDEDOR =======");
+                        if (relMensal.length === 0) console.log("Nenhuma venda este mês.");
+                        else console.table(relMensal);
+                        console.log("=============================================");
+                    }
+                    break;
+                case '7': // Cancelar Venda
+                    const vIdCan = await rl.question("ID da Venda para CANCELAR: ");
+                    await g.cancelarVenda(vIdCan);
+                    console.log("✅ Venda Cancelada e Estoque Restaurado (via Procedure)!");
                     break;
                 case '0':
                     loop = false;

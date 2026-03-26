@@ -67,3 +67,41 @@ CREATE TABLE pagamento (
   criado_em        TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX idx_cliente_nome ON cliente(nome);
+CREATE INDEX idx_produto_nome ON produto(nome);
+CREATE INDEX idx_vendedor_nome ON vendedor(nome);
+CREATE INDEX idx_venda_data ON venda(data_venda);
+
+CREATE OR REPLACE VIEW v_vendas_detalhadas AS
+SELECT 
+    v.id AS venda_id,
+    v.data_venda,
+    c.nome AS cliente_nome,
+    vdr.nome AS vendedor_nome,
+    v.total_bruto,
+    v.desconto_percent,
+    v.total_liquido,
+    v.status
+FROM venda v
+JOIN cliente c ON v.cliente_id = c.id
+JOIN vendedor vdr ON v.vendedor_id = vdr.id;
+
+CREATE OR REPLACE PROCEDURE cancelar_venda(p_venda_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    r_item RECORD;
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM venda WHERE id = p_venda_id AND status = 'CONCLUIDA') THEN
+        RAISE EXCEPTION 'Venda % não encontrada ou já cancelada.', p_venda_id;
+    END IF;
+
+    FOR r_item IN SELECT produto_id, quantidade FROM item_venda WHERE venda_id = p_venda_id LOOP
+        UPDATE produto SET quantidade = quantidade + r_item.quantidade WHERE id = r_item.produto_id;
+    END LOOP;
+    UPDATE venda SET status = 'CANCELADA' WHERE id = p_venda_id;
+    UPDATE pagamento SET status_confirmacao = 'CANCELADO' WHERE venda_id = p_venda_id;
+
+    RAISE NOTICE 'Venda % cancelada e estoque restaurado.', p_venda_id;
+END;
+$$;

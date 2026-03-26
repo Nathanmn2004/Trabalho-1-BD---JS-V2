@@ -36,8 +36,10 @@ class GerenciadorDistribuidora {
 
     // --- VENDAS & RELATÓRIOS ---
     async realizarVenda(...args) { return vendaService.realizarVenda(...args); }
+    async cancelarVenda(id) { return vendaService.cancelarVenda(id); }
     async listarVendas() { return vendaService.listarVendas(); }
     async gerarRelatorioGeral() { return vendaService.gerarRelatorioGeral(); }
+    async gerarRelatorioMensalVendedores() { return vendaService.gerarRelatorioMensalVendedores(); }
 }
 
 module.exports = GerenciadorDistribuidora;

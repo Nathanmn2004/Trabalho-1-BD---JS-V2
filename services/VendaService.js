@@ -75,8 +75,8 @@ class VendaService {
     }
 
     async listarVendas() {
-        const res = await pool.query('SELECT * FROM venda ORDER BY data_venda DESC');
-        return res.rows.map(v => new Venda(v.id, v.cliente_id, v.vendedor_id, v.data_venda, v.desconto_percent, v.total_bruto, v.total_liquido, v.status));
+        const res = await pool.query('SELECT * FROM v_vendas_detalhadas ORDER BY data_venda DESC, venda_id DESC');
+        return res.rows;
     }
 
     async gerarRelatorioGeral() {

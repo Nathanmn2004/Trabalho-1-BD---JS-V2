@@ -85,8 +85,13 @@ async function main() {
                         console.table(await g.produtosDeMari());
                     }
                     if (subP == '10') {
-                        console.log("Produtos Com Menos de 5 Unidades:");
-                        console.table(await g.produtosComMenosdeCinco());
+                        const senha = await rl.question("🔒 Acesso restrito a funcionários. Senha: ");
+                        if (senha !== '1234') {
+                            console.log("❌ Senha incorreta. Acesso negado.");
+                        } else {
+                            console.log("Produtos Com Menos de 5 Unidades:");
+                            console.table(await g.produtosComMenosdeCinco());
+                        }
                     }
 
                     break;
@@ -202,7 +207,18 @@ async function main() {
                     break;
                 case '5': // Listar Vendas
                     console.log("\n--- VENDAS REALIZADAS ---");
-                    console.table(await g.listarVendas());
+                    const vendas = await g.listarVendas();
+                    if (vendas.length === 0) {
+                        console.log("Nenhuma venda registrada.");
+                    } else {
+                        vendas.forEach(v => {
+                            console.log(`\n🧾 Venda #${v.venda_id} | ${new Date(v.data_venda).toLocaleString('pt-BR')}`);
+                            console.log(`   Cliente : ${v.cliente_nome}`);
+                            console.log(`   Vendedor: ${v.vendedor_nome}`);
+                            console.log(`   Bruto: R$ ${parseFloat(v.total_bruto).toFixed(2)} | Desconto: ${v.desconto_percent}% | Líquido: R$ ${parseFloat(v.total_liquido).toFixed(2)}`);
+                            console.log(`   Status  : ${v.status}`);
+                        });
+                    }
                     break;
                 case '6': // Relatórios
                     console.log("\n[RELATÓRIOS] 1. Geral 2. Mensal por Vendedor");

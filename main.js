@@ -213,8 +213,8 @@ async function main() {
                     } else {
                         vendas.forEach(v => {
                             console.log(`\n🧾 Venda #${v.venda_id} | ${new Date(v.data_venda).toLocaleString('pt-BR')}`);
-                            console.log(`   Cliente : ${v.cliente_nome}`);
-                            console.log(`   Vendedor: ${v.vendedor_nome}`);
+                            console.log(`   Cliente : ${v.cliente_nome} | ID: ${v.cliente_id}`);
+                            console.log(`   Vendedor: ${v.vendedor_nome} | ID: ${v.vendedor_id}`);
                             console.log(`   Bruto: R$ ${parseFloat(v.total_bruto).toFixed(2)} | Desconto: ${v.desconto_percent}% | Líquido: R$ ${parseFloat(v.total_liquido).toFixed(2)}`);
                             console.log(`   Status  : ${v.status}`);
                         });

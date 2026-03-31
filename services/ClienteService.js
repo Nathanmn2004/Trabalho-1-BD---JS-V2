@@ -24,8 +24,43 @@ class ClienteService {
     }
 
     async alterar(id, nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece) {
-        const query = 'UPDATE cliente SET nome = $1, cpf = $2, telefone = $3, cidade = $4, torce_flamengo = $5, assiste_one_piece = $6 WHERE id = $7 RETURNING *';
-        const res = await pool.query(query, [nome, cpf, telefone, cidade, torce_flamengo, assiste_one_piece, id]);
+        const fields = [];
+        const values = [];
+        let queryIdx = 1;
+
+        if (nome !== undefined && nome !== '') {
+            fields.push(`nome = $${queryIdx++}`);
+            values.push(nome);
+        }
+        if (cpf !== undefined && cpf !== '') {
+            fields.push(`cpf = $${queryIdx++}`);
+            values.push(cpf);
+        }
+        if (telefone !== undefined && telefone !== '') {
+            fields.push(`telefone = $${queryIdx++}`);
+            values.push(telefone);
+        }
+        if (cidade !== undefined && cidade !== '') {
+            fields.push(`cidade = $${queryIdx++}`);
+            values.push(cidade);
+        }
+        if (torce_flamengo !== undefined && torce_flamengo !== '') {
+            fields.push(`torce_flamengo = $${queryIdx++}`);
+            values.push(torce_flamengo);
+        }
+        if (assiste_one_piece !== undefined && assiste_one_piece !== '') {
+            fields.push(`assiste_one_piece = $${queryIdx++}`);
+            values.push(assiste_one_piece);
+        }
+
+        if (fields.length === 0) {
+            return this.exibir(id);
+        }
+
+        values.push(id);
+        const query = `UPDATE cliente SET ${fields.join(', ')} WHERE id = $${queryIdx} RETURNING *`;
+        const res = await pool.query(query, values);
+        
         if (res.rowCount === 0) {
             throw new Error("Cliente não encontrado.");
         }

@@ -47,12 +47,18 @@ async function main() {
                     }
                     if (subP === '4') {
                         const id = await rl.question("ID do Produto para Alterar: ");
-                        const n = await rl.question("Novo Nome: ");
-                        const m = await rl.question("Nova Marca: ");
-                        const c = await rl.question("Nova Categoria: ");
-                        const p = await rl.question("Novo Preço: ");
-                        const q = await rl.question("Nova Qtd: ");
-                        const mari = (await rl.question("Fabricado em Mari? (s/n): ")) === 's';
+                        const prodAtual = await g.exibirProduto(id);
+                        if (!prodAtual) {
+                            console.log("❌ Produto não encontrado.");
+                            break;
+                        }
+                        const n = await rl.question(`Novo Nome (Atual: ${prodAtual.nome}, Enter para manter): `);
+                        const m = await rl.question(`Nova Marca (Atual: ${prodAtual.marca}, Enter para manter): `);
+                        const c = await rl.question(`Nova Categoria (Atual: ${prodAtual.categoria}, Enter para manter): `);
+                        const p = await rl.question(`Novo Preço (Atual: ${prodAtual.preco}, Enter para manter): `);
+                        const q = await rl.question(`Nova Qtd (Atual: ${prodAtual.quantidade}, Enter para manter): `);
+                        const mariStr = await rl.question(`Fabricado em Mari? (Atual: ${prodAtual.fabricado_em_mari ? 's' : 'n'}, s/n, Enter para manter): `);
+                        const mari = mariStr === '' ? undefined : (mariStr.toLowerCase() === 's');
                         await g.alterarProduto(id, n, m, c, p, q, mari);
                         console.log("✅ Produto Alterado com Sucesso!");
                     }
@@ -121,12 +127,19 @@ async function main() {
                     }
                     if (subC === '5') {
                         const id = await rl.question("ID do Cliente para Alterar: ");
-                        const n = await rl.question("Novo Nome: ");
-                        const cp = await rl.question("Novo CPF: ");
-                        const t = await rl.question("Novo Tel: ");
-                        const cid = await rl.question("Nova Cidade: ");
-                        const f = (await rl.question("Flamengo? (s/n): ")) === 's';
-                        const o = (await rl.question("One Piece? (s/n): ")) === 's';
+                        const cliAtual = await g.exibirCliente(id);
+                        if (!cliAtual) {
+                            console.log("❌ Cliente não encontrado.");
+                            break;
+                        }
+                        const n = await rl.question(`Novo Nome (Atual: ${cliAtual.nome}, Enter para manter): `);
+                        const cp = await rl.question(`Novo CPF (Atual: ${cliAtual.cpf}, Enter para manter): `);
+                        const t = await rl.question(`Novo Tel (Atual: ${cliAtual.telefone}, Enter para manter): `);
+                        const cid = await rl.question(`Nova Cidade (Atual: ${cliAtual.cidade}, Enter para manter): `);
+                        const fStr = await rl.question(`Flamengo? (Atual: ${cliAtual.torce_flamengo ? 's' : 'n'}, s/n, Enter para manter): `);
+                        const f = fStr === '' ? undefined : (fStr.toLowerCase() === 's');
+                        const oStr = await rl.question(`One Piece? (Atual: ${cliAtual.assiste_one_piece ? 's' : 'n'}, s/n, Enter para manter): `);
+                        const o = oStr === '' ? undefined : (oStr.toLowerCase() === 's');
                         await g.alterarCliente(id, n, cp, t, cid, f, o);
                         console.log("✅ Cliente Alterado com Sucesso!");
                     }
@@ -159,9 +172,15 @@ async function main() {
                     }
                     if (subV === '4') {
                         const id = await rl.question("ID do Vendedor para Alterar: ");
-                        const n = await rl.question("Novo Nome: ");
-                        const ma = await rl.question("Nova Matrícula: ");
-                        const at = (await rl.question("Ativo? (s/n): ")) === 's';
+                        const vendAtual = await g.exibirVendedor(id);
+                        if (!vendAtual) {
+                            console.log("❌ Vendedor não encontrado.");
+                            break;
+                        }
+                        const n = await rl.question(`Novo Nome (Atual: ${vendAtual.nome}, Enter para manter): `);
+                        const ma = await rl.question(`Nova Matrícula (Atual: ${vendAtual.matricula}, Enter para manter): `);
+                        const atStr = await rl.question(`Ativo? (Atual: ${vendAtual.ativo ? 's' : 'n'}, s/n, Enter para manter): `);
+                        const at = atStr === '' ? undefined : (atStr.toLowerCase() === 's');
                         await g.alterarVendedor(id, n, ma, at);
                         console.log("✅ Vendedor Alterado com Sucesso!");
                     }

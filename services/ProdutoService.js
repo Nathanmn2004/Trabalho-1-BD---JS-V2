@@ -24,8 +24,43 @@ class ProdutoService {
     }
 
     async alterar(id, nome, marca, categoria, preco, quantidade, fabricado_em_mari) {
-        const query = 'UPDATE produto SET nome = $1, marca = $2, categoria = $3, preco = $4, quantidade = $5, fabricado_em_mari = $6 WHERE id = $7 RETURNING *';
-        const res = await pool.query(query, [nome, marca, categoria, preco, quantidade, fabricado_em_mari, id]);
+        const fields = [];
+        const values = [];
+        let queryIdx = 1;
+
+        if (nome !== undefined && nome !== '') {
+            fields.push(`nome = $${queryIdx++}`);
+            values.push(nome);
+        }
+        if (marca !== undefined && marca !== '') {
+            fields.push(`marca = $${queryIdx++}`);
+            values.push(marca);
+        }
+        if (categoria !== undefined && categoria !== '') {
+            fields.push(`categoria = $${queryIdx++}`);
+            values.push(categoria);
+        }
+        if (preco !== undefined && preco !== '') {
+            fields.push(`preco = $${queryIdx++}`);
+            values.push(preco);
+        }
+        if (quantidade !== undefined && quantidade !== '') {
+            fields.push(`quantidade = $${queryIdx++}`);
+            values.push(quantidade);
+        }
+        if (fabricado_em_mari !== undefined && fabricado_em_mari !== '') {
+            fields.push(`fabricado_em_mari = $${queryIdx++}`);
+            values.push(fabricado_em_mari);
+        }
+
+        if (fields.length === 0) {
+            return this.exibir(id);
+        }
+
+        values.push(id);
+        const query = `UPDATE produto SET ${fields.join(', ')} WHERE id = $${queryIdx} RETURNING *`;
+        const res = await pool.query(query, values);
+        
         if (res.rowCount === 0) {
             throw new Error("Produto não encontrado.");
         }

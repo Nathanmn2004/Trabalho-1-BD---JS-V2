@@ -24,8 +24,31 @@ class VendedorService {
     }
 
     async alterar(id, nome, matricula, ativo) {
-        const query = 'UPDATE vendedor SET nome = $1, matricula = $2, ativo = $3 WHERE id = $4 RETURNING *';
-        const res = await pool.query(query, [nome, matricula, ativo, id]);
+        const fields = [];
+        const values = [];
+        let queryIdx = 1;
+
+        if (nome !== undefined && nome !== '') {
+            fields.push(`nome = $${queryIdx++}`);
+            values.push(nome);
+        }
+        if (matricula !== undefined && matricula !== '') {
+            fields.push(`matricula = $${queryIdx++}`);
+            values.push(matricula);
+        }
+        if (ativo !== undefined && ativo !== '') {
+            fields.push(`ativo = $${queryIdx++}`);
+            values.push(ativo);
+        }
+
+        if (fields.length === 0) {
+            return this.exibir(id);
+        }
+
+        values.push(id);
+        const query = `UPDATE vendedor SET ${fields.join(', ')} WHERE id = $${queryIdx} RETURNING *`;
+        const res = await pool.query(query, values);
+        
         if (res.rowCount === 0) {
             throw new Error("Vendedor não encontrado.");
         }
